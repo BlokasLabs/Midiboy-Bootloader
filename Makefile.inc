@@ -5,8 +5,8 @@
 # Tabsize: 4
 # License: GNU GPL v2 (see License.txt)
 
-F_CPU = 16000000
-DEVICE = atmega8
+F_CPU = 20000000
+DEVICE = atmega328p
 
 # where the updating firmware should be located (starting address)
 FLASHADDRESS = 0x0000
@@ -15,10 +15,10 @@ FLASHADDRESS = 0x0000
 UPDATECRC32  = 0
 
 # tinyUSBboard revision to build
-DEFINES += -DTINYUSBBOARD_REV3
+#DEFINES += -DTINYUSBBOARD_REV3
 
 # build bootloader with internal credits - needs avr-gcc version 4.8.1 and 16MHz
-DEFINES += -DTINYUSBBOARD_WITHCREDITS
+#DEFINES += -DTINYUSBBOARD_WITHCREDITS
 
 # some MCU independent defines...
 #...will be extended within MCU dependend configuration below...
@@ -28,7 +28,7 @@ DEFINES += -DCONFIG_NO__CHIP_ERASE -DCONFIG_NO__ONDEMAND_PAGEERASE -DCONFIG_NO__
 ;DEFINES += -DCONFIG_HAVE__BOOTLOADER_ALWAYSENTERPROGRAMMODE
 
 # have the bootloader exit itself after around 3 seconds (@16MHz) inactivity
-;DEFINES += -DCONFIG_BOOTLOADER_LOOPCYCLES_TIMEOUT=16 -DCONFIG_HAVE__BOOTLOADER_ABORTTIMEOUTONACT
+#;DEFINES += -DCONFIG_BOOTLOADER_LOOPCYCLES_TIMEOUT=16 -DCONFIG_HAVE__BOOTLOADER_ABORTTIMEOUTONACT
 
 # save the PROG button on the layout (CAREFUL - read feature description first)
 ;DEFINES += -DCONFIG_HAVE__BOOTLOADER_IGNOREPROGBUTTON
