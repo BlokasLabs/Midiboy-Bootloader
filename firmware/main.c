@@ -12,6 +12,7 @@
 #include "spminterface.h"  /* must be included as first! */
 
 #include "../misc/iofixes.h"
+#include "midimon.h"
 
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
@@ -327,6 +328,7 @@ static void leaveBootloader(void) {
     cli();
     usbDeviceDisconnect();
     bootLoaderExit();
+    midimon_uninit();
     USB_INTR_ENABLE = 0;
     USB_INTR_CFG = 0;       /* also reset config bits */
     GICR = (1 << IVCE);     /* enable change of interrupt vectors */
@@ -662,6 +664,7 @@ uchar   i,isLast;
 	data += 2;
 	/* write page when we cross page boundary or we have the last partial page */
 	if((currentAddress.w[0] & (SPM_PAGESIZE - 1)) == 0 || (isLast && i >= len && isLastPage)){
+		midimon_progress();
 #if (!HAVE_CHIP_ERASE) || (HAVE_ONDEMAND_PAGEERASE)
 	    DBG1(0x33, 0, 0);
 #   ifndef NO_FLASH_WRITE
@@ -691,7 +694,8 @@ uchar   i,isLast;
 
 uchar usbFunctionRead(uchar *data, uchar len)
 {
-uchar   i;
+    uchar   i;
+    midimon_progress_reset();
 
     if(len > bytesRemaining)
         len = bytesRemaining;
@@ -766,10 +770,15 @@ static void initForUsbConnectivity(void)
 
 int __attribute__((__noreturn__)) main(void)
 {
+    midimon_init();
 #if ((BOOTLOADER_LOOPCYCLES_TIMEOUT) && (BOOTLOADER_CAN_EXIT))
     uint16_t __loopscycles;
     timeout_remaining = BOOTLOADER_LOOPCYCLES_TIMEOUT;
 #endif
+
+    bool powerOnReset = MCUCSR & (1 << PORF);
+    MCUCSR = 0;
+
     /* initialize  */
     bootLoaderInit();
     odDebugInit();
@@ -781,7 +790,7 @@ int __attribute__((__noreturn__)) main(void)
 #if (HAVE_BOOTLOADER_ADDITIONALMSDEVICEWAIT>0)
     _mydelay_ms(HAVE_BOOTLOADER_ADDITIONALMSDEVICEWAIT);
 #endif
-    if(bootLoaderCondition()){
+    if(bootLoaderCondition() || !powerOnReset){
 #if (BOOTLOADER_CAN_EXIT)
 #	if (USE_EXCESSIVE_ASSEMBLER)
 asm  volatile  (
@@ -895,6 +904,7 @@ asm  volatile  (
         }while (1);  		/* main event loop */
 #endif
     }
+    _mydelay_ms(600);
     leaveBootloader();
 }
 

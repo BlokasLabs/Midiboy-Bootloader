@@ -22,7 +22,7 @@ include ../Makefile.inc
 CFLAGS = -Wall -Os -g3 -ggdb -fno-move-loop-invariants -fno-tree-scev-cprop -fno-inline-small-functions -I. -mmcu=$(DEVICE) -DBOOTLOADER_ADDRESS=$(BOOTLOADER_ADDRESS) -DF_CPU=$(F_CPU) $(DEFINES)
 LDFLAGS = -Wl,--relax,--gc-sections -Wl,--section-start=.text=$(BOOTLOADER_ADDRESS) -Wl,--defsym=nullVector=0
 
-DEPENDS =  bootloaderconfig.h ../Makefile.inc
+DEPENDS =  bootloaderconfig.h ../Makefile.inc midimon.o midimon.h blokas_logo.o blokas_logo.h
 
 # symbolic targets:
 all: main.hex $(DEPENDS)
@@ -35,6 +35,12 @@ usbdrv/oddebug.o: usbdrv/oddebug.c $(DEPENDS)
 
 main.o: main.c $(DEPENDS)
 	$(CC) main.c -c -o main.o $(CFLAGS)
+
+midimon.o: midimon.c midimon.h
+	$(CC) midimon.c -c -o midimon.o $(CFLAGS)
+
+blokas_logo.o: blokas_logo.c blokas_logo.h
+	$(CC) blokas_logo.c -c -o blokas_logo.o $(CFLAGS)
 
 flash:	all
 	$(ECHO) "."
@@ -79,6 +85,8 @@ clean:
 	$(RM) main.elf
 	$(RM) main.o
 	$(RM) main.s
+	$(RM) midimon.o
+	$(RM) blokas_logo.o
 ifeq ($(HOSTOS), Windows_NT)
 	$(RM) usbdrv\usbdrvasm.o
 	$(RM) usbdrv\oddebug.o
@@ -93,7 +101,7 @@ endif
 
 # file targets:
 main.elf: usbdrv/usbdrvasm.o usbdrv/oddebug.o main.o $(DEPENDS)
-	$(CC) $(CFLAGS) -o main.elf usbdrv/usbdrvasm.o usbdrv/oddebug.o main.o -Wl,-Map,main.map $(LDFLAGS)
+	$(CC) $(CFLAGS) -o main.elf usbdrv/usbdrvasm.o usbdrv/oddebug.o main.o midimon.o blokas_logo.o -Wl,-Map,main.map $(LDFLAGS)
 
 main.asm: main.elf $(DEPENDS)
 	$(OBD) -Stdr main.elf > main.asm
@@ -104,7 +112,7 @@ main.hex: main.elf main.asm $(DEPENDS)
 	$(ECHO) "."
 	$(ECHO) "."
 	$(ECHO) "."
-	$(ECHO) "!!!ATTANTION!!!"
+	$(ECHO) "!!!ATTENTION!!!"
 	$(ECHO) "(data+text) MUST fit into your MCUs bootloader section"
 	$(ECHO) "."
 	$(SIZ) --mcu $(DEVICE) main.elf

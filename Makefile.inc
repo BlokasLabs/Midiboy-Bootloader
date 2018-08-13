@@ -7,6 +7,7 @@
 
 F_CPU = 20000000
 DEVICE = atmega328p
+;DEFINES += -DCONFIG_NO__BOOTLOADER_CAN_EXIT
 
 # where the updating firmware should be located (starting address)
 FLASHADDRESS = 0x0000
