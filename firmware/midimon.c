@@ -7,20 +7,19 @@
 
 #define SPI_PORT B
 #define LCD_PORT C
+#define LCD_BACKLIGHT_PORT B
 
 #define CONCAT(x, y) x ## y
 
 #define DDR(p) CONCAT(DDR, p)
 #define PORT(p) CONCAT(PORT, p)
 
-enum { SPI_SS   = (1 << 2) };
-enum { SPI_MOSI = (1 << 3) };
-enum { SPI_SCK  = (1 << 5) };
-//enum { LCD_RST  = (1 << 1) };
-//enum { LCD_CD   = (1 << 0) };
-enum { LCD_RST = (1 << 2) };
-enum { LCD_CD  = (1 << 1) };
-enum { LCD_BACKLIGHT = (1 << 0) }; // update for rev3
+enum { SPI_SS        = (1 << 2) };
+enum { SPI_MOSI      = (1 << 3) };
+enum { SPI_SCK       = (1 << 5) };
+enum { LCD_RST       = (1 << 1) };
+enum { LCD_CD        = (1 << 0) };
+enum { LCD_BACKLIGHT = (1 << 1) };
 
 static void spi_send(uint8_t b)
 {
@@ -96,8 +95,9 @@ static void draw_logo(void)
 void midimon_init(void)
 {
 	DDR(SPI_PORT) |= SPI_SS | SPI_MOSI | SPI_SCK;
-	DDR(LCD_PORT) |= LCD_RST | LCD_CD | LCD_BACKLIGHT;
-	PORT(LCD_PORT) |= LCD_BACKLIGHT;
+	DDR(LCD_PORT) |= LCD_RST | LCD_CD;
+	DDR(LCD_BACKLIGHT_PORT) |= LCD_BACKLIGHT;
+	PORT(LCD_BACKLIGHT_PORT) |= LCD_BACKLIGHT;
 	SPCR = (1 << SPE) | (1 << MSTR);
 	SPSR = (1 << SPI2X);
 	PORT(LCD_PORT) |= LCD_RST;
@@ -121,15 +121,6 @@ void midimon_init(void)
 	spi_send(0xa4);
 	spi_send(0xaf);
 
-	//PORT(LCD_PORT) |= LCD_CD; // Data mode.
-	//
-	//int i;
-	//for (i = 0; i<132 * 65 / 8; ++i)
-	//{
-	//	spi_send(0x00);
-	//	spi_send(0x00);
-	//}
-
 	spi_end();
 
 	draw_logo();
@@ -142,8 +133,10 @@ void midimon_uninit(void)
 	PORT(SPI_PORT) &= ~(SPI_SS | SPI_MOSI | SPI_SCK);
 
 	// LCD_RST left at HIGH state intentionally.
-	DDR(LCD_PORT)  &= ~(/*LCD_RST |*/ LCD_CD | LCD_BACKLIGHT);
+	DDR(LCD_PORT)  &= ~(/*LCD_RST |*/ LCD_CD);
 	PORT(LCD_PORT) &= ~(/*LCD_RST |*/ LCD_CD | LCD_BACKLIGHT);
+	DDR(LCD_BACKLIGHT_PORT)  &= ~(LCD_BACKLIGHT);
+	PORT(LCD_BACKLIGHT_PORT) &= ~(LCD_BACKLIGHT);
 }
 
 void midimon_progress(void)
