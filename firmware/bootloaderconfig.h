@@ -50,6 +50,10 @@ these macros are defined, the boot loader usees them.
 
 /* ---------------------------- Hardware Config ---------------------------- */
 
+#define USB_CFG_DMINUS_BIT 3
+#define JUMPER_PORT C
+#define JUMPER_BIT 2
+
 #ifndef USB_CFG_IOPORTNAME
   #define USB_CFG_IOPORTNAME      D
 #endif
@@ -127,7 +131,7 @@ these macros are defined, the boot loader usees them.
  * the macros usbDeviceConnect() and usbDeviceDisconnect() (see usbdrv.h).
  * This constant defines the port on which the pullup resistor is connected.
  */
-#define USB_CFG_PULLUP_BIT          5
+#define USB_CFG_PULLUP_BIT          4
 /* This constant defines the bit number in USB_CFG_PULLUP_IOPORT (defined
  * above) where the 1.5k pullup resistor is connected. See description
  * above for details.
