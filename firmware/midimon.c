@@ -52,11 +52,25 @@ static void draw_logo(void)
 {
 	spi_begin();
 
-	uint8_t x = 29;
+	uint8_t x = 42;
 	uint8_t i;
 	uint8_t j;
+	uint8_t y;
 
-	for (j=0; j<BLOKAS_LOGO_HEIGHT/8; ++j)
+	for (j=0; j<1; ++j)
+	{
+		PORT(LCD_PORT) &= ~LCD_CD;
+		spi_send(0x00);
+		spi_send(0x10);
+		spi_send(0xb0 | j);
+		PORT(LCD_PORT) |= LCD_CD;
+		for (i = 0; i<132; ++i)
+		{
+			spi_send(0x00);
+		}
+	}
+
+	for (y=0; y<BLOKAS_LOGO_HEIGHT/8; ++j, ++y)
 	{
 		PORT(LCD_PORT) &= ~LCD_CD;
 		spi_send(0x00);
@@ -69,7 +83,7 @@ static void draw_logo(void)
 		}
 		for (i=0; i<BLOKAS_LOGO_WIDTH; ++i)
 		{
-			spi_send(~pgm_read_byte(&BLOKAS_LOGO[j*BLOKAS_LOGO_WIDTH+i]));
+			spi_send(~pgm_read_byte(&BLOKAS_LOGO[y*BLOKAS_LOGO_WIDTH+i]));
 		}
 		for (i=x+ BLOKAS_LOGO_WIDTH; i<132; ++i)
 		{
