@@ -1,6 +1,8 @@
 #include "midimon.h"
 #include "blokas_logo.h"
 
+#include <stdbool.h>
+
 #include <avr/pgmspace.h>
 #include <avr/io.h>
 #include <util/delay.h>
@@ -20,6 +22,21 @@ enum { SPI_SCK       = (1 << 5) };
 enum { LCD_RST       = (1 << 1) };
 enum { LCD_CD        = (1 << 0) };
 enum { LCD_BACKLIGHT = (1 << 1) };
+
+enum { LCD_BACKLIGHT_SETTING_ADDR = E2END };
+
+static uint8_t eeprom_read(uint16_t address)
+{
+	while (EECR & (1 << EEPE));
+	EEAR = address;
+	EECR |= (1 << EERE);
+	return EEDR;
+}
+
+static inline bool settings_is_lcd_backlight_enabled()
+{
+	return eeprom_read(LCD_BACKLIGHT_SETTING_ADDR) != 0;
+}
 
 static void spi_send(uint8_t b)
 {
@@ -110,8 +127,11 @@ void midimon_init(void)
 {
 	DDR(SPI_PORT) |= SPI_SS | SPI_MOSI | SPI_SCK;
 	DDR(LCD_PORT) |= LCD_RST | LCD_CD;
-	DDR(LCD_BACKLIGHT_PORT) |= LCD_BACKLIGHT;
-	PORT(LCD_BACKLIGHT_PORT) |= LCD_BACKLIGHT;
+	if (settings_is_lcd_backlight_enabled())
+	{
+		DDR(LCD_BACKLIGHT_PORT) |= LCD_BACKLIGHT;
+		PORT(LCD_BACKLIGHT_PORT) |= LCD_BACKLIGHT;
+	}
 	SPCR = (1 << SPE) | (1 << MSTR);
 	SPSR = (1 << SPI2X);
 	PORT(LCD_PORT) |= LCD_RST;
@@ -148,9 +168,10 @@ void midimon_uninit(void)
 
 	// LCD_RST left at HIGH state intentionally.
 	DDR(LCD_PORT)  &= ~(/*LCD_RST |*/ LCD_CD);
-	PORT(LCD_PORT) &= ~(/*LCD_RST |*/ LCD_CD | LCD_BACKLIGHT);
-	DDR(LCD_BACKLIGHT_PORT)  &= ~(LCD_BACKLIGHT);
-	PORT(LCD_BACKLIGHT_PORT) &= ~(LCD_BACKLIGHT);
+	PORT(LCD_PORT) &= ~(/*LCD_RST |*/ LCD_CD);
+	// LCD_BACKLIGHT is left to EEPROM configed value.
+	//DDR(LCD_BACKLIGHT_PORT)  &= ~(LCD_BACKLIGHT);
+	//PORT(LCD_BACKLIGHT_PORT) &= ~(LCD_BACKLIGHT);
 }
 
 void midimon_progress(void)
