@@ -21,6 +21,7 @@
 #include <avr/eeprom.h>
 #include <util/delay.h>
 
+#include <stdbool.h>
 
 #if 0
 /*

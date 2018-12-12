@@ -8,8 +8,7 @@
 #include <util/delay.h>
 
 #define SPI_PORT B
-#define LCD_PORT C
-#define LCD_BACKLIGHT_PORT B
+#define LCD_PORT D
 
 #define CONCAT(x, y) x ## y
 
@@ -19,24 +18,8 @@
 enum { SPI_SS        = (1 << 2) };
 enum { SPI_MOSI      = (1 << 3) };
 enum { SPI_SCK       = (1 << 5) };
-enum { LCD_RST       = (1 << 1) };
-enum { LCD_CD        = (1 << 0) };
-enum { LCD_BACKLIGHT = (1 << 1) };
-
-enum { LCD_BACKLIGHT_SETTING_ADDR = E2END };
-
-static uint8_t eeprom_read(uint16_t address)
-{
-	while (EECR & (1 << EEPE));
-	EEAR = address;
-	EECR |= (1 << EERE);
-	return EEDR;
-}
-
-static inline bool settings_is_lcd_backlight_enabled()
-{
-	return eeprom_read(LCD_BACKLIGHT_SETTING_ADDR) != 0;
-}
+enum { LCD_RST       = (1 << 6) };
+enum { LCD_DC        = (1 << 7) };
 
 static void spi_send(uint8_t b)
 {
@@ -58,7 +41,7 @@ static uint8_t g_scroll = 0;
 
 static void set_scroll(uint8_t line)
 {
-	PORT(LCD_PORT) &= ~LCD_CD;
+	PORT(LCD_PORT) &= ~LCD_DC;
 	spi_begin();
 	g_scroll = line & 0x3f;
 	spi_send(0x40 | g_scroll);
@@ -76,11 +59,11 @@ static void draw_logo(void)
 
 	for (j=0; j<1; ++j)
 	{
-		PORT(LCD_PORT) &= ~LCD_CD;
+		PORT(LCD_PORT) &= ~LCD_DC;
 		spi_send(0x00);
 		spi_send(0x10);
 		spi_send(0xb0 | j);
-		PORT(LCD_PORT) |= LCD_CD;
+		PORT(LCD_PORT) |= LCD_DC;
 		for (i = 0; i<132; ++i)
 		{
 			spi_send(0x00);
@@ -89,11 +72,11 @@ static void draw_logo(void)
 
 	for (y=0; y<BLOKAS_LOGO_HEIGHT/8; ++j, ++y)
 	{
-		PORT(LCD_PORT) &= ~LCD_CD;
+		PORT(LCD_PORT) &= ~LCD_DC;
 		spi_send(0x00);
 		spi_send(0x10);
 		spi_send(0xb0 | (j & 0x07));
-		PORT(LCD_PORT) |= LCD_CD;
+		PORT(LCD_PORT) |= LCD_DC;
 		for (i=0; i<x; ++i)
 		{
 			spi_send(0x00);
@@ -109,11 +92,11 @@ static void draw_logo(void)
 	}
 	for (; j<=8; ++j)
 	{
-		PORT(LCD_PORT) &= ~LCD_CD;
+		PORT(LCD_PORT) &= ~LCD_DC;
 		spi_send(0x00);
 		spi_send(0x10);
 		spi_send(0xb0 | j);
-		PORT(LCD_PORT) |= LCD_CD;
+		PORT(LCD_PORT) |= LCD_DC;
 		for (i = 0; i<132; ++i)
 		{
 			spi_send(0x00);
@@ -126,16 +109,11 @@ static void draw_logo(void)
 void midimon_init(void)
 {
 	DDR(SPI_PORT) |= SPI_SS | SPI_MOSI | SPI_SCK;
-	DDR(LCD_PORT) |= LCD_RST | LCD_CD;
-	if (settings_is_lcd_backlight_enabled())
-	{
-		DDR(LCD_BACKLIGHT_PORT) |= LCD_BACKLIGHT;
-		PORT(LCD_BACKLIGHT_PORT) |= LCD_BACKLIGHT;
-	}
+	DDR(LCD_PORT) |= LCD_RST | LCD_DC;
 	SPCR = (1 << SPE) | (1 << MSTR);
 	SPSR = (1 << SPI2X);
 	PORT(LCD_PORT) |= LCD_RST;
-	PORT(LCD_PORT) &= ~LCD_CD; // Command mode.
+	PORT(LCD_PORT) &= ~LCD_DC; // Command mode.
 	spi_begin();
 
 	spi_send(0x40);
@@ -167,11 +145,8 @@ void midimon_uninit(void)
 	PORT(SPI_PORT) &= ~(SPI_SS | SPI_MOSI | SPI_SCK);
 
 	// LCD_RST left at HIGH state intentionally.
-	DDR(LCD_PORT)  &= ~(/*LCD_RST |*/ LCD_CD);
-	PORT(LCD_PORT) &= ~(/*LCD_RST |*/ LCD_CD);
-	// LCD_BACKLIGHT is left to EEPROM configed value.
-	//DDR(LCD_BACKLIGHT_PORT)  &= ~(LCD_BACKLIGHT);
-	//PORT(LCD_BACKLIGHT_PORT) &= ~(LCD_BACKLIGHT);
+	DDR(LCD_PORT)  &= ~(/*LCD_RST |*/ LCD_DC);
+	PORT(LCD_PORT) &= ~(/*LCD_RST |*/ LCD_DC);
 }
 
 void midimon_progress(void)

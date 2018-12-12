@@ -52,7 +52,9 @@ these macros are defined, the boot loader usees them.
 
 #define USB_CFG_DMINUS_BIT 3
 #define JUMPER_PORT C
-#define JUMPER_BIT 2
+#define JUMPER_BIT 1
+#define CONFIG_NO__BOOTLOADERENTRY_FROMSOFTWARE
+#define CONFIG_NO__BOOTLOADER_HIDDENEXITCOMMAND
 
 #ifndef USB_CFG_IOPORTNAME
   #define USB_CFG_IOPORTNAME      D
